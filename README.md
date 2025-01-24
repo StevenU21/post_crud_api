@@ -1,66 +1,152 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 📚 Laravel API CRUD - Posts
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Este proyecto es una API desarrollada con **Laravel 11** que implementa un CRUD (Crear, Leer, Actualizar, Eliminar) para manejar publicaciones (**Posts**). A continuación, se describe el funcionamiento, configuración e instrucciones para trabajar con esta API.
 
-## About Laravel
+## 🚀 Características principales
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **CRUD completo:** Operaciones para crear, leer, actualizar y eliminar publicaciones.
+- **Validación robusta:** Regla personalizada para validar datos en el request.
+- **Respuestas JSON estructuradas:** Uso de `PostResource` para formatear las respuestas.
+- **Paginación integrada:** Los resultados están paginados con un límite de 10 publicaciones por página.
+- **Rutas organizadas:** Agrupadas bajo el prefijo `/posts`.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 📂 Estructura del controlador
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+El controlador principal es `PostController`, que incluye las siguientes acciones:
 
-## Learning Laravel
+### 1. Listar publicaciones
+```php
+public function index(): AnonymousResourceCollection
+```
+- **Descripción:** Recupera una lista paginada de publicaciones.
+- **Endpoint:** `GET /posts`
+- **Respuesta:**
+  ```json
+  {
+    "data": [...],
+    "links": {...},
+    "meta": {...}
+  }
+  ```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 2. Mostrar una publicación específica
+```php
+public function show(int $id): PostResource
+```
+- **Descripción:** Recupera los detalles de una publicación específica por su ID.
+- **Endpoint:** `GET /posts/{id}/show`
+- **Respuesta:**
+  ```json
+  {
+    "id": 1,
+    "title": "Sample Title",
+    "content": "Sample Content",
+    ...
+  }
+  ```
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### 3. Crear una publicación
+```php
+public function store(PostRequest $request): PostResource
+```
+- **Descripción:** Crea una nueva publicación.
+- **Endpoint:** `POST /posts`
+- **Cuerpo requerido:**
+  ```json
+  {
+    "title": "Required String (6-40 chars)",
+    "content": "Required String (6-255 chars)"
+  }
+  ```
+- **Respuesta:** La publicación recién creada en formato JSON.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 4. Actualizar una publicación
+```php
+public function update(PostRequest $request, int $id): PostResource
+```
+- **Descripción:** Actualiza una publicación existente por su ID.
+- **Endpoint:** `PUT /posts/{id}/update`
+- **Cuerpo requerido:** Igual que el método `store`.
+- **Respuesta:** La publicación actualizada en formato JSON.
 
-## Laravel Sponsors
+### 5. Eliminar una publicación
+```php
+public function destroy(int $id): JsonResponse
+```
+- **Descripción:** Elimina una publicación existente por su ID.
+- **Endpoint:** `DELETE /posts/{id}/destroy`
+- **Respuesta:** Código de estado 204 sin contenido.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## ✅ Validación
 
-### Premium Partners
+La validación de las solicitudes está gestionada por `PostRequest`. Las reglas son:
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+- **`title`:** Requerido, cadena de texto, mínimo 6 caracteres, máximo 40 caracteres, único.
+- **`content`:** Requerido, cadena de texto, mínimo 6 caracteres, máximo 255 caracteres.
 
-## Contributing
+Código de las reglas:
+```php
+public function rules(): array
+{
+    return [
+        'title' => ['required', 'string', 'min:6', 'max:40', Rule::unique('posts')->ignore($this->post)],
+        'content' => ['required', 'string', 'min:6', 'max:255'],
+    ];
+}
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## 🌐 Rutas
 
-## Code of Conduct
+Las rutas de esta API están definidas en `routes/api.php`:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```php
+Route::prefix('/posts')->group(function () {
+    Route::get('/', [PostController::class, 'index'])->name('posts.index');
+    Route::get('/{post}/show', [PostController::class, 'show'])->name('posts.show');
+    Route::post('/', [PostController::class, 'store'])->name('posts.store');
+    Route::put('/{post}/update', [PostController::class, 'update'])->name('posts.update');
+    Route::delete('/{post}/destroy', [PostController::class, 'destroy'])->name('posts.destroy');
+});
+```
 
-## Security Vulnerabilities
+## 🔧 Instalación y configuración
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Sigue estos pasos para configurar el proyecto localmente:
 
-## License
+1. Clona el repositorio:
+   ```bash
+   git clone https://github.com/StevenU21/post_crud_api.git
+   ```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+2. Instala las dependencias:
+   ```bash
+   composer install
+   ```
+
+3. Copia el archivo `.env.example` y configúralo:
+   ```bash
+   cp .env.example .env
+   ```
+
+4. Genera la clave de la aplicación:
+   ```bash
+   php artisan key:generate
+   ```
+
+5. Ejecuta las migraciones:
+   ```bash
+   php artisan migrate 
+   ```
+
+6. Ejecuta las seeds:
+   ```bash
+   php artisan db:seed
+   ```
+
+## 🧪 Pruebas
+
+Ejecuta las pruebas para verificar el funcionamiento del proyecto:
+
+```bash
+php artisan test
+```
